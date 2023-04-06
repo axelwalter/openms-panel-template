@@ -1,0 +1,1 @@
+# openms-panel-template

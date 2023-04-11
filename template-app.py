@@ -1,13 +1,16 @@
 import panel as pn
+from pathlib import Path
 
 # Import all pages for your app
 from pages.home import home
-from pages.workspaces import workspace_page
+from pages.workspaces import workspaces
 
 
 pn.extension()
 pn.config.sizing_mode = "stretch_width"
 
+# Setting up global variables
+pn.state.session_args["workspace"] = Path("workspaces", "default")
 
 # test printing the state
 button = pn.widgets.Button(name="Click me", button_type="primary")
@@ -24,7 +27,7 @@ fsp = pn.Column(button)
 # Set pages (pn.Column objects with content) from /pages directory
 pages = pn.Tabs(
     ("🏠 Home", home),
-    ("🖥️ Workspaces", workspace_page),
+    ("🖥️ Workspaces", workspaces),
     ("📂 File Selection", fsp),
     ("👀 Raw Data Visualization", home),
     ("🧪 Workflow", home),

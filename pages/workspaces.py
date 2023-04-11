@@ -1,59 +1,94 @@
+import param
 import panel as pn
 from pathlib import Path
+import shutil
+
+pn.extension()
 
 
-pn.state.session_args["workspace"] = Path("workspaces", "default")
-if not pn.state.session_args["workspace"].exists():
-    pn.state.session_args["workspace"].mkdir()
+class Workspaces(param.Parameterized):
+    # Initialize with default workspaces directory in session args, watch selector for workspace changes
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.param.watch(self.set_current_workspace, "selector")
 
-ws_selector = pn.widgets.Select(
-    name="Select Workspace",
-    options=[path.name for path in Path("workspaces").iterdir()],
-)
-
-current_ws_indicator = pn.pane.Alert(
-    f"Your current workspace: **default**",
-    alert_type="primary",
-)
-
-
-def set_current_workspace(event):
-    pn.state.session_args["workspace"] = Path("workspace", ws_selector.value)
-    current_ws_indicator.object = (
-        f"Your current workspace: **{pn.state.session_args['workspace'].name}**"
+    # Selector for currently available workspaces
+    selector = param.Selector(
+        default="default",
+        objects=[p.name for p in Path("workspaces").iterdir()],
     )
 
+    # Text field for creating new workspaces
+    create = param.String()
 
-ws_selector.param.watch(set_current_workspace, "value")
+    # Button to create new workspace -> calls create_worspace function
+    create_action = param.Action(lambda self: self.create_workspace())
 
-new_ws_name = pn.widgets.TextInput(
-    value="", placeholder="Enter new workspace name here..."
-)
-new_ws_button = pn.widgets.Button(name="Create Workspace", button_type="success")
+    # Delete currently selected workspace button
+    delete_action = param.Action(lambda self: self.delete_workspace())
+
+    # Sets current workspace whenever selector widget changes, either manually or by new workspace
+    def set_current_workspace(self, event):
+        pn.state.session_args["workspace"] = Path("workspaces", self.selector)
+
+    # Creates new workspace directory and updates selector widget
+    def create_workspace(self):
+        if self.create:
+            path = Path("workspaces", self.create)
+            path.mkdir(exist_ok=True)
+            l = self.param.selector.objects.copy()
+            l.append(self.create)
+            self.param.selector.objects = l
+            self.selector = self.create
+            self.create = ""
+
+    # Deletes selected workspace if it's not default
+    def delete_workspace(self):
+        if self.selector != "default":
+            shutil.rmtree(pn.state.session_args["workspace"])
+            l = self.param.selector.objects.copy()
+            l.remove(self.selector)
+            self.param.selector.objects = l
+            self.selector = "default"
 
 
-def create_workspace(event):
-    pn.state.session_args["workspace"] = Path("workspaces", new_ws_name.value)
-    if not pn.state.session_args["workspace"].exists():
-        pn.state.session_args["workspace"].mkdir()
-
-
-new_ws_button.on_click(create_workspace)
-
-workspace_page = pn.Column(
-    pn.Row(
-        ws_selector,
-        current_ws_indicator,
+# Build the content of the workspaces page
+workspaces = pn.Card(
+    pn.Param(
+        Workspaces().param,
+        widgets={
+            "selector": {
+                "widget_type": pn.widgets.Select,
+                "name": "Select Workspace",
+                "margin": (10, 10, 30, 10),
+            },
+            "create": {
+                "widget_type": pn.widgets.TextInput,
+                "placeholder": "Enter new workspace name here...",
+                "name": "Create a new workspace",
+            },
+            "create_action": {
+                "widget_type": pn.widgets.Button,
+                "button_type": "success",
+                "name": "Create Workspace",
+                "margin": (10, 10, 30, 10),
+            },
+            "delete_action": {
+                "widget_type": pn.widgets.Button,
+                "button_type": "danger",
+                "name": "Delete Selected Workspace",
+            },
+        },
+        show_name=False,
     ),
-    pn.Row(
-        pn.Card(new_ws_name, new_ws_button, title="Create Workspace"),
-        pn.Card(title="Delete Workspace"),
-    ),
+    title="Workspace Settings",
+    collapsible=False,
+    max_width=300,
 )
 
-if __name__ == "__main__":
-    pn.extension()
-    pn.config.sizing_mode = "stretch_width"
-    workspace_page.servable()
 
-# {pn.state.session_args['workspace'].name}
+# ws = Workspaces()
+
+# content = ws.content()
+
+# content.servable()

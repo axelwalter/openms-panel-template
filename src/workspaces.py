@@ -7,9 +7,11 @@ pn.extension()
 
 
 class Workspaces(param.Parameterized):
-    # Initialize with default workspaces directory in session args, watch selector for workspace changes
+    # Initialize with default workspaces directory in session args
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Watch selector for workspace changes
         self.param.watch(self.set_current_workspace, "selector")
 
     # Selector for currently available workspaces
@@ -29,13 +31,20 @@ class Workspaces(param.Parameterized):
 
     # Sets current workspace whenever selector widget changes, either manually or by new workspace
     def set_current_workspace(self, event):
-        pn.state.session_args["workspace"] = Path("workspaces", self.selector)
+        pn.state.cache["workspace"] = Path("workspaces", self.selector)
+        pn.state.cache["mzML"] = Path(pn.state.cache["workspace"], "mzML")
+        # pn.state.cache["selected"].options = [
+        #     p.name for p in pn.state.cache["mzML"].iterdir()
+        # ]
+        # pn.state.cache["selected"].value = [
+        #     p.name for p in pn.state.cache["mzML"].iterdir()
+        # ]
 
     # Creates new workspace directory and updates selector widget
     def create_workspace(self):
         if self.create:
-            path = Path("workspaces", self.create)
-            path.mkdir(exist_ok=True)
+            path = Path("workspaces", self.create, "mzML")
+            path.mkdir(parents=True, exist_ok=True)
             l = self.param.selector.objects.copy()
             l.append(self.create)
             self.param.selector.objects = l
@@ -45,7 +54,7 @@ class Workspaces(param.Parameterized):
     # Deletes selected workspace if it's not default
     def delete_workspace(self):
         if self.selector != "default":
-            shutil.rmtree(pn.state.session_args["workspace"])
+            shutil.rmtree(pn.state.cache["workspace"])
             l = self.param.selector.objects.copy()
             l.remove(self.selector)
             self.param.selector.objects = l

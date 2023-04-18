@@ -1,23 +1,30 @@
 import panel as pn
 from pathlib import Path
 
+pn.extension()
+pn.config.sizing_mode = "stretch_width"
+
+# Make sure the default workspace exists
+pn.state.cache["workspace"] = Path("workspaces", "default")
+if not pn.state.cache["workspace"].exists():
+    pn.state.cache["workspace"].mkdir()
+pn.state.cache["mzML"] = Path(pn.state.cache["workspace"], "mzML")
+if not pn.state.cache["mzML"].exists():
+    pn.state.cache["mzML"].mkdir()
+
 # Import all pages for your app
 from pages.home import home
 from pages.workspaces import workspaces
 
+# from pages.fileselection import fileselection
 
-pn.extension()
-pn.config.sizing_mode = "stretch_width"
-
-# Setting up global variables
-pn.state.session_args["workspace"] = Path("workspaces", "default")
 
 # test printing the state
 button = pn.widgets.Button(name="Click me", button_type="primary")
 
 
 def printstate(event):
-    print(pn.state.session_args)
+    print(pn.state.cache)
 
 
 button.on_click(printstate)
@@ -28,7 +35,7 @@ fsp = pn.Column(button)
 pages = pn.Tabs(
     ("🏠 Home", home),
     ("🖥️ Workspaces", workspaces),
-    ("📂 File Selection", fsp),
+    ("📂 File Selection", home),
     ("👀 Raw Data Visualization", home),
     ("🧪 Workflow", home),
 )

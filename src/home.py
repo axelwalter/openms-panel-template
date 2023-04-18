@@ -1,12 +1,9 @@
 import panel as pn
 
-pn.extension()
-pn.config.sizing_mode = "stretch_width"
-
 home = pn.Column(
     pn.pane.Markdown(
         """
-## About
+## TemplateApp
 This app is based on the [UmetaFlow](https://chemrxiv.org/engage/chemrxiv/article-details/634fb68fdfbd2b6abc5c5fcd) workflow for LC-MS data analysis. UmetaFlow is implemented as a [snakemake pipeline](https://github.com/NBChub/snakemake-UmetaFlow) and as a Python version in [Jupyter notebooks](https://github.com/eeko-kon/pyOpenMS_UmetaFlow) based on [pyOpenMS](https://pyopenms.readthedocs.io/en/latest/index.html).
 Here, we take the powerful UmetFlow algorithms in a simple and easy graphical user interface. In contrast to the pipeline for automatic data processing,
 this app is tweaked a bit to be used with smaller to medium sample sets and some manual data interpretation. For example the automatic annotation of features via SIRIUS is omitted.
